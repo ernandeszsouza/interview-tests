@@ -1,79 +1,103 @@
 package com.ernandes;
 
-//License Key Formatting
-//Given a string S that consists of only alphanumeric characters and dashes.
-// The string is separated into N + 1 groups by N dashes. Also given an integer K.
-// We want to reformat the string S, such that each group contains exactly K characters,
-// except for the first group, which could be shorter than K but still must contain at least one character.
-// Furthermore, a dash must be inserted between two groups, and you should convert
-// all lowercase letters to uppercase.
-//Examples:
-//Input: S = “5F3Z-2e-9-w”, K = 4
-//Output: “5F3Z-2E9W”
-//Explanation: The string S has been split into two parts,
-//each part has 4 characters.
-//Note that two extra dashes are not needed and can be removed.
-//Input: S = “2-5g-3-J”, K = 2
-//Output: “2-5G-3J”
-//Explanation: The string s has been split into three parts,
-//each part has 2 characters except the first part
-//as it could be shorter as mentioned above
-
+import java.util.List;
 
 public class Main {
 
 
-
     public static void main(String[] args) {
 
-        var s1 = "5F3Z-2e-9-w";
-        var s2 = "2-5g-3-J";
+        var test1Result = test1();
+        var test2Result = test2();
+        var test3Result = test3();
 
-        var k1 = 4;
-        var k2 = 2;
-
-        System.out.println();
-
-        var results1 = splitString(s1, k1);
-        var results2 = splitString(s2, k2);
-
-        System.out.println(results1);
-        System.out.println(results2);
-    }
-
-    private static String splitString(String s, int k) {
-
-        if(s == null || s.isEmpty() || k <= 0){
-            throw new IllegalArgumentException("Invalid input");
-        }
-
-        return getStringPart(s , k, true);
-    }
-
-    private static String getStringPart(String s, int windowSize, boolean isFirstGroup) {
-        if(s.length() < windowSize){
-            return s;
-        }
-
-        var next = s.indexOf("-");
-
-        if(s.substring(0,next).length() == windowSize){
-            return s;
-        }
-
-        if (next != -1) {
-            s = new StringBuilder(s).deleteCharAt(next).toString();
-            s = getStringPart(s.substring(next), windowSize-next, false);
-        }
-
-
-        return s.substring(0, windowSize) + "-" + getStringPart(s.substring(windowSize), windowSize, false);
+        System.out.println("test 1 result " + test1Result);
+        System.out.println("test 2 result " + test2Result);
+        System.out.println("test 3 result " + test3Result);
     }
 
 
+    public static boolean test1(){
+        var t1 = new Transaction(1000, 500);
+        var t2 = new Transaction(1500, 700);
+        var t3 = new Transaction(1800, 400);
+        var t4 = new Transaction(4000, 200);
+
+        var transactions = List.of(t1, t2, t3, t4);
+
+        var minTransactions = 3;
+        var timeWindowMillis = 1000;
+        var amountThreshold = 1500;
+
+        return hasSuspiciousBurst(transactions, minTransactions, timeWindowMillis, amountThreshold);
+    }
+
+    public static boolean test2(){
+
+        var t1 = new Transaction(100, 100);
+        var t2 = new Transaction(200, 100);
+        var t3 = new Transaction(300, 100);
+        var t4 = new Transaction(500, 100);
+
+        var transactions = List.of(t1, t2, t3, t4);
+
+        var minTransactions = 3;
+        var timeWindowMillis = 500;
+        var amountThreshold = 500;
+
+        return hasSuspiciousBurst(transactions, minTransactions, timeWindowMillis, amountThreshold);
+    }
+
+    public static boolean test3(){
+        var t1 = new Transaction(1000, 10);
+        var t2 = new Transaction(5000, 600);
+        var t3 = new Transaction(5200, 600);
+        var t4 = new Transaction(5400, 600);
+
+        var transactions = List.of(t1, t2, t3, t4);
+
+        var minTransactions = 3;
+        var timeWindowMillis = 500;
+        var amountThreshold = 1500;
+
+        return hasSuspiciousBurst(transactions, minTransactions, timeWindowMillis, amountThreshold);
+    }
+
+    public static boolean hasSuspiciousBurst(List<Transaction> transactions,
+                                             int minTransactions, long timeWindowMillis,
+                                             long amountThreshold) {
+
+        var totalAmount = transactions.getFirst().amount;
+        var point2 = 1;
+
+        for (int point1 = 0; point1 < transactions.size(); point1++) {
+
+            while (shouldMovePoint2(transactions, timeWindowMillis, point1, point2, minTransactions, transactions.size())) {
+                totalAmount = totalAmount + transactions.get(point2).amount;
+                if (totalAmount >= amountThreshold) {
+                    return true;
+                }
+                point2++;
+            }
+
+            totalAmount = totalAmount - transactions.get(point1).amount;
+        }
+
+        return false;
+    }
+
+    private static boolean shouldMovePoint2(List<Transaction> transactions, long timeWindowMillis,
+                                            int point1, int point2, int minTransactions, int listSize) {
+        if (point2 == listSize) {
+            return false;
+        }
+
+        var timestamp = transactions.get(point1).timestamp + transactions.get(point2).timestamp;
+        var numberOfTransaction = point2 - point1;
+
+        return timestamp >= timeWindowMillis || numberOfTransaction >= minTransactions;
+    }
 }
-
-
 
 
 
